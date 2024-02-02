@@ -277,9 +277,15 @@ namespace Spine.Unity {
 			}
 		}
 
-		protected override void Awake () {
+		private bool _initialized = false;
+		protected override void OnEnable () {
 
-			base.Awake();
+			base.OnEnable();
+			//base.Awake();
+
+			if (_initialized) return;
+			_initialized = true;
+			
 			this.onCullStateChanged.AddListener(OnCullStateChanged);
 
 			SyncSubmeshGraphicsWithCanvasRenderers();
