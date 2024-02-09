@@ -314,7 +314,7 @@ namespace Spine.Unity {
 
 		public override void Rebuild (CanvasUpdate update) {
 			base.Rebuild(update);
-			if (canvasRenderer.cull) return;
+			if (canvasRenderer.cull || UpdateMode == UpdateMode.Nothing) return;
 			if (update == CanvasUpdate.PreRender) {
 				if (requiresInstructionUpate) PrepareInstructionsAndRenderers(isInRebuild: true);
 				UpdateMeshToInstructions();
