@@ -168,9 +168,20 @@ namespace Spine.Unity {
 				}
 
 				if (mat != null)
+				{
 					materials[i] = mat;
+				}
+				else if (textures.Length > 0)
+				{
+					// Assume first is ok
+					mat = new Material(materialPropertySource);
+					mat.mainTexture = textures[0];
+					materials[i] = mat;
+				}
 				else
+				{
 					throw new ArgumentException("Could not find matching atlas page in the texture array.");
+				}
 			}
 
 			// Create AtlasAsset normally
