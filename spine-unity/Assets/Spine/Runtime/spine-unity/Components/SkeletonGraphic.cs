@@ -126,7 +126,7 @@ namespace Spine.Unity {
 			if (this.IsValid) {
 				if (skeletonDataAsset == null) {
 					Clear();
-				} else if (skeletonDataAsset.skeletonJSON == null) {
+				} else if (skeletonDataAsset.skeletonJSON == null && skeletonDataAsset.skeletonBytes == null) {
 					Clear();
 				} else if (skeletonDataAsset.GetSkeletonData(true) != skeleton.Data) {
 					Clear();
