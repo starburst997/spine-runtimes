@@ -712,9 +712,12 @@ namespace Spine.Unity.AttachmentTools {
 
 		/// <summary>
 		/// Gets the Rect of an AtlasRegion according to Unity texture coordinates (x-right, y-up).</summary>
-		static Rect GetUnityRect (this AtlasRegion region, int textureHeight) {
+		// Removed because we cannot do Windows Build otherwise, seems fixed in later version of Unity
+		// See: https://zh.esotericsoftware.com/forum/d/17984-spine-411-internal-compiler-error-c1001/6
+		/*static Rect GetUnityRect (this AtlasRegion region, int textureHeight) {
 			return region.GetSpineAtlasRect().SpineUnityFlipRect(textureHeight);
 		}
+		}*/
 
 		/// <summary>
 		/// Returns a Rect of the AtlasRegion according to Spine texture coordinates. (x-right, y-down)</summary>

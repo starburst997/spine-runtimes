@@ -48,6 +48,7 @@ namespace Spine.Unity {
 		public float scale = 0.01f;
 #endif
 		public TextAsset skeletonJSON;
+		[NonSerialized] public byte[] skeletonBytes;
 
 		public bool isUpgradingBlendModeMaterials = false;
 		public BlendModeMaterials blendModeMaterials = new BlendModeMaterials();
@@ -84,12 +85,29 @@ namespace Spine.Unity {
 			return CreateRuntimeInstance(skeletonDataFile, new[] { atlasAsset }, initialize, scale);
 		}
 
+		public static SkeletonDataAsset CreateRuntimeInstance (byte[] skeletonDataBytes, AtlasAssetBase atlasAsset, bool initialize, float scale = 0.01f) {
+			return CreateRuntimeInstance(skeletonDataBytes, new[] { atlasAsset }, initialize, scale);
+		}
+		
 		/// <summary>
 		/// Creates a runtime SkeletonDataAsset.</summary>
 		public static SkeletonDataAsset CreateRuntimeInstance (TextAsset skeletonDataFile, AtlasAssetBase[] atlasAssets, bool initialize, float scale = 0.01f) {
 			SkeletonDataAsset skeletonDataAsset = ScriptableObject.CreateInstance<SkeletonDataAsset>();
 			skeletonDataAsset.Clear();
 			skeletonDataAsset.skeletonJSON = skeletonDataFile;
+			skeletonDataAsset.atlasAssets = atlasAssets;
+			skeletonDataAsset.scale = scale;
+
+			if (initialize)
+				skeletonDataAsset.GetSkeletonData(true);
+
+			return skeletonDataAsset;
+		}
+		
+		public static SkeletonDataAsset CreateRuntimeInstance (byte[] skeletonDataBytes, AtlasAssetBase[] atlasAssets, bool initialize, float scale = 0.01f) {
+			SkeletonDataAsset skeletonDataAsset = ScriptableObject.CreateInstance<SkeletonDataAsset>();
+			skeletonDataAsset.Clear();
+			skeletonDataAsset.skeletonBytes = skeletonDataBytes;
 			skeletonDataAsset.atlasAssets = atlasAssets;
 			skeletonDataAsset.scale = scale;
 
@@ -115,7 +133,7 @@ namespace Spine.Unity {
 
 		/// <summary>Loads, caches and returns the SkeletonData from the skeleton data file. Returns the cached SkeletonData after the first time it is called. Pass false to prevent direct errors from being logged.</summary>
 		public SkeletonData GetSkeletonData (bool quiet) {
-			if (skeletonJSON == null) {
+			if (skeletonJSON == null && skeletonBytes == null) {
 #if UNITY_EDITOR
 				if (!errorIfSkeletonFileNullGlobal) quiet = true;
 #endif
@@ -170,12 +188,12 @@ namespace Spine.Unity {
 			}
 #endif
 
-			bool hasBinaryExtension = skeletonJSON.name.ToLower().Contains(".skel");
+			bool hasBinaryExtension = skeletonBytes != null || skeletonJSON.name.ToLower().Contains(".skel");
 			SkeletonData loadedSkeletonData = null;
 
 			try {
 				if (hasBinaryExtension)
-					loadedSkeletonData = SkeletonDataAsset.ReadSkeletonData(skeletonJSON.bytes, attachmentLoader, skeletonDataScale);
+					loadedSkeletonData = SkeletonDataAsset.ReadSkeletonData(skeletonBytes != null ? skeletonBytes : skeletonJSON.bytes, attachmentLoader, skeletonDataScale);
 				else
 					loadedSkeletonData = SkeletonDataAsset.ReadSkeletonData(skeletonJSON.text, attachmentLoader, skeletonDataScale);
 			} catch (Exception ex) {
