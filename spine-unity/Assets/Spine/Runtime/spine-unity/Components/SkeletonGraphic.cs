@@ -126,7 +126,7 @@ namespace Spine.Unity {
 			if (this.IsValid) {
 				if (skeletonDataAsset == null) {
 					Clear();
-				} else if (skeletonDataAsset.skeletonJSON == null) {
+				} else if (skeletonDataAsset.skeletonJSON == null && skeletonDataAsset.skeletonBytes == null) {
 					Clear();
 				} else if (skeletonDataAsset.GetSkeletonData(true) != skeleton.Data) {
 					Clear();
@@ -277,9 +277,15 @@ namespace Spine.Unity {
 			}
 		}
 
-		protected override void Awake () {
+		private bool _initialized = false;
+		protected override void OnEnable () {
 
-			base.Awake();
+			base.OnEnable();
+			//base.Awake();
+
+			if (_initialized) return;
+			_initialized = true;
+			
 			this.onCullStateChanged.AddListener(OnCullStateChanged);
 
 			SyncSubmeshGraphicsWithCanvasRenderers();
@@ -308,7 +314,7 @@ namespace Spine.Unity {
 
 		public override void Rebuild (CanvasUpdate update) {
 			base.Rebuild(update);
-			if (canvasRenderer.cull) return;
+			if (canvasRenderer.cull || UpdateMode == UpdateMode.Nothing) return;
 			if (update == CanvasUpdate.PreRender) {
 				if (requiresInstructionUpate) PrepareInstructionsAndRenderers(isInRebuild: true);
 				UpdateMeshToInstructions();

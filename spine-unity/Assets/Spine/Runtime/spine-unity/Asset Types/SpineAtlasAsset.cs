@@ -37,6 +37,7 @@ namespace Spine.Unity {
 	[CreateAssetMenu(fileName = "New Spine Atlas Asset", menuName = "Spine/Spine Atlas Asset")]
 	public class SpineAtlasAsset : AtlasAssetBase {
 		public TextAsset atlasFile;
+		[NonSerialized] public string atlasString;
 		public Material[] materials;
 		public TextureLoader customTextureLoader;
 		protected Atlas atlas;
@@ -60,6 +61,22 @@ namespace Spine.Unity {
 			SpineAtlasAsset atlasAsset = ScriptableObject.CreateInstance<SpineAtlasAsset>();
 			atlasAsset.Reset();
 			atlasAsset.atlasFile = atlasText;
+			atlasAsset.materials = materials;
+			if (newCustomTextureLoader != null)
+				atlasAsset.customTextureLoader = newCustomTextureLoader(atlasAsset);
+
+			if (initialize)
+				atlasAsset.GetAtlas();
+
+			return atlasAsset;
+		}
+		
+		public static SpineAtlasAsset CreateRuntimeInstance (string atlasString, Material[] materials, bool initialize,
+			Func<SpineAtlasAsset, TextureLoader> newCustomTextureLoader = null) {
+
+			SpineAtlasAsset atlasAsset = ScriptableObject.CreateInstance<SpineAtlasAsset>();
+			atlasAsset.Reset();
+			atlasAsset.atlasString = atlasString;
 			atlasAsset.materials = materials;
 			if (newCustomTextureLoader != null)
 				atlasAsset.customTextureLoader = newCustomTextureLoader(atlasAsset);
@@ -117,7 +134,58 @@ namespace Spine.Unity {
 			}
 
 			// Create AtlasAsset normally
-			return CreateRuntimeInstance(atlasText, materials, initialize, newCustomTextureLoader);
+			return CreateRuntimeInstance(atlasString, materials, initialize, newCustomTextureLoader);
+		}
+
+		public static SpineAtlasAsset CreateRuntimeInstance (string atlasString, Texture2D[] textures,
+			Material materialPropertySource, bool initialize,
+			Func<SpineAtlasAsset, TextureLoader> newCustomTextureLoader = null) {
+
+			// Get atlas page names.
+			atlasString = atlasString.Replace("\r", "");
+			string[] atlasLines = atlasString.Split('\n');
+			List<string> pages = new List<string>();
+			for (int i = 0; i < atlasLines.Length - 1; i++) {
+				string line = atlasLines[i].Trim();
+				if (line.EndsWith(".png"))
+					pages.Add(line.Replace(".png", ""));
+			}
+
+			// Populate Materials[] by matching texture names with page names.
+			Material[] materials = new Material[pages.Count];
+			for (int i = 0, n = pages.Count; i < n; i++) {
+				Material mat = null;
+
+				// Search for a match.
+				string pageName = pages[i];
+				for (int j = 0, m = textures.Length; j < m; j++) {
+					if (string.Equals(pageName, textures[j].name, System.StringComparison.OrdinalIgnoreCase)) {
+						// Match found.
+						mat = new Material(materialPropertySource);
+						mat.mainTexture = textures[j];
+						break;
+					}
+				}
+
+				if (mat != null)
+				{
+					materials[i] = mat;
+				}
+				else if (textures.Length > 0)
+				{
+					// Assume first is ok
+					mat = new Material(materialPropertySource);
+					mat.mainTexture = textures[0];
+					materials[i] = mat;
+				}
+				else
+				{
+					throw new ArgumentException("Could not find matching atlas page in the texture array.");
+				}
+			}
+
+			// Create AtlasAsset normally
+			return CreateRuntimeInstance(atlasString, materials, initialize, newCustomTextureLoader);
 		}
 
 		/// <summary>
@@ -150,7 +218,7 @@ namespace Spine.Unity {
 
 		/// <returns>The atlas or null if it could not be loaded.</returns>
 		public override Atlas GetAtlas (bool onlyMetaData = false) {
-			if (atlasFile == null) {
+			if (atlasFile == null && atlasString == null) {
 				Debug.LogError("Atlas file not set for atlas asset: " + name, this);
 				Clear();
 				return null;
@@ -170,7 +238,7 @@ namespace Spine.Unity {
 					loader = customTextureLoader == null ? new MaterialsTextureLoader(this) : customTextureLoader;
 				else
 					loader = new NoOpTextureLoader();
-				atlas = new Atlas(new StringReader(atlasFile.text), "", loader);
+				atlas = new Atlas(new StringReader(atlasString != null ? atlasString : atlasFile.text), "", loader);
 				atlas.FlipV();
 				return atlas;
 			} catch (Exception ex) {

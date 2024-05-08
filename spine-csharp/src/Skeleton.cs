@@ -559,13 +559,18 @@ namespace Spine {
 					Attachment attachment = null;
 					if (attachmentName != null) {
 						attachment = GetAttachment(i, attachmentName);
-						if (attachment == null) throw new Exception("Attachment not found: " + attachmentName + ", for slot: " + slotName);
+						if (attachment == null)
+						{
+							//throw new Exception("Attachment not found: " + attachmentName + ", for slot: " + slotName);
+							return;
+						}
 					}
 					slot.Attachment = attachment;
 					return;
 				}
 			}
-			throw new Exception("Slot not found: " + slotName);
+			
+			//throw new Exception("Slot not found: " + slotName);
 		}
 
 		/// <summary>Finds an IK constraint by comparing each IK constraint's name. It is more efficient to cache the results of this method
